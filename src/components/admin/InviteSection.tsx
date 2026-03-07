@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-const BASE_URL = "https://cidadex-br.lovable.app";
+const BASE_URL = "https://cidadex-br.com";
 
 type RankEntry = { user_id: string; display_name: string; avatar_url: string | null; count: number };
 

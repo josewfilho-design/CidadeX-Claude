@@ -12,7 +12,6 @@ export default defineConfig(({ mode }) => ({
     hmr: {
       overlay: false,
     },
-    historyApiFallback: true,
   },
   plugins: [
     react(),

@@ -132,7 +132,7 @@ const tabDescriptions: Record<Tab, string> = {
   convidar: "Convidar amigos para o app",
 };
 
-const SHARE_URL = `https://wa.me/?text=${encodeURIComponent("📱 Baixe o CidadeX — explore cidades do Ceará com mapa, bairros, ruas, notícias e lugares! https://cidadex-br.lovable.app/install")}`;
+const SHARE_URL = `https://wa.me/?text=${encodeURIComponent("📱 Baixe o CidadeX — explore cidades do Ceará com mapa, bairros, ruas, notícias e lugares! https://cidadex-br.com/install")}`;
 
 /** Shared update-check logic (desktop & mobile) */
 async function checkForUpdates(fullCheck: boolean) {

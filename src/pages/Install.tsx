@@ -106,7 +106,7 @@ const Install = () => {
 
             {/* Share via WhatsApp */}
             <a
-              href={`https://wa.me/?text=${encodeURIComponent("📱 Baixe o CidadeX — explore cidades do Ceará com mapa, bairros, ruas, notícias e lugares! Instale direto do navegador: https://cidadex-br.lovable.app/install")}`}
+              href={`https://wa.me/?text=${encodeURIComponent("📱 Baixe o CidadeX — explore cidades do Ceará com mapa, bairros, ruas, notícias e lugares! Instale direto do navegador: https://cidadex-br.com/install")}`}
               target="_blank"
               rel="noopener noreferrer"
               className="w-full flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl bg-[#25D366] text-white font-bold text-base shadow-lg hover:bg-[#20bd5a] transition-all active:scale-[0.98]"
