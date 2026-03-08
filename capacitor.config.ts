@@ -8,6 +8,16 @@ const config: CapacitorConfig = {
     url: 'https://cidadex-br.com',
     cleartext: false,
   },
+  android: {
+    backgroundColor: '#ffffff',
+  },
+  plugins: {
+    StatusBar: {
+      style: 'DEFAULT',
+      backgroundColor: '#ffffff',
+      overlaysWebView: false,
+    },
+  },
 };
 
 export default config;

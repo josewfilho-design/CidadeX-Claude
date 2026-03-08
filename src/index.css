@@ -165,6 +165,18 @@
   padding-bottom: max(8px, env(safe-area-inset-bottom));
 }
 
+/* Safe area for top (Android status bar) */
+.safe-area-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+/* Apply status bar padding to body on native Android */
+@supports (padding-top: env(safe-area-inset-top)) {
+  body {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+}
+
 /* Scroll snap for horizontal tabs */
 .tabs-scroll-snap {
   scroll-snap-type: x mandatory;
