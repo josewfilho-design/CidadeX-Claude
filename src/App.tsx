@@ -13,6 +13,7 @@ import { useContentProtection } from "@/hooks/useContentProtection";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import GlobalErrorBoundary from "@/components/common/GlobalErrorBoundary";
 import WordSelectionPopup from "@/components/common/WordSelectionPopup";
+import { useEffect } from "react";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Install from "./pages/Install";
@@ -23,6 +24,19 @@ import Help from "./pages/Help";
 import Admin from "./pages/Admin";
 import Privacy from "./pages/Privacy";
 import Viewer from "./pages/Viewer";
+
+// Fix Android StatusBar color to match app header
+async function initStatusBar() {
+  try {
+    const { StatusBar, Style } = await import("@capacitor/status-bar");
+    await StatusBar.setStyle({ style: Style.Dark });
+    await StatusBar.setBackgroundColor({ color: "#1a6b40" });
+    await StatusBar.setOverlaysWebView({ overlay: false });
+  } catch {
+    // Not running in Capacitor (web browser) — ignore
+  }
+}
+initStatusBar();
 
 const queryClient = new QueryClient();
 

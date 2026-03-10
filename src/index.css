@@ -165,16 +165,21 @@
   padding-bottom: max(8px, env(safe-area-inset-bottom));
 }
 
-/* Safe area for top (Android status bar) */
-.safe-area-top {
-  padding-top: env(safe-area-inset-top, 0px);
+:root {
+  --header-height: 56px;
+  --tabbar-height: 44px;
+  --bottomnav-height: 64px;
+  --sticky-total: calc(var(--header-height) + var(--tabbar-height));
 }
 
-/* Apply status bar padding to body on native Android */
-@supports (padding-top: env(safe-area-inset-top)) {
-  body {
-    padding-top: env(safe-area-inset-top, 0px);
-  }
+/* Prevent anchored scroll from hiding behind sticky bars */
+html {
+  scroll-padding-top: var(--sticky-total);
+}
+
+/* Global fix: ensure content inside main never scrolls behind sticky header+tabbar */
+main > * {
+  scroll-margin-top: var(--sticky-total);
 }
 
 /* Scroll snap for horizontal tabs */

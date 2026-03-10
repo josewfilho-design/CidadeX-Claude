@@ -16,7 +16,7 @@ android {
     }
     signingConfigs {
         release {
-            storeFile file('../cidadex-release.jks')
+            storeFile file('C:/cidadex-br-00dc8ed6-main/android/cidadex-release.jks')
             storePassword 'CidadeX@2026'
             keyAlias 'cidadex'
             keyPassword 'CidadeX@2026'

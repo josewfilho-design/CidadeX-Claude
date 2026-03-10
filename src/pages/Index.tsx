@@ -421,9 +421,9 @@ const Index = () => {
 
   return (
     <>
-    <div className="min-h-screen bg-background">
+    <div className="h-screen flex flex-col bg-background overflow-hidden">
       {/* Header */}
-      <header className="gradient-hero sticky top-0 z-40 shadow-lg">
+      <header className="gradient-hero z-40 shadow-lg shrink-0">
         <div className="container py-2 sm:py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl gradient-gold flex items-center justify-center shadow-md">
@@ -507,7 +507,7 @@ const Index = () => {
                       </Avatar>
                     </Link>
                   </HoverCardTrigger>
-                  <HoverCardContent align="end" className="w-64 p-3 space-y-2">
+                  <HoverCardContent align="end" sideOffset={6} className="w-64 p-3 space-y-2 z-[200] shadow-xl border border-border">
                     <div className="flex items-center gap-3">
                       <Avatar className="w-10 h-10">
                         {myProfile?.avatar_url && <AvatarImage src={myProfile.avatar_url} alt={myProfile.display_name} />}
@@ -599,7 +599,7 @@ const Index = () => {
                       <MoreVertical className="w-4 h-4" />
                     </button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="bg-popover z-50 min-w-[180px]">
+                  <DropdownMenuContent align="end" sideOffset={6} className="bg-popover z-[200] min-w-[180px] shadow-xl border border-border">
                     <DropdownMenuItem asChild>
                       <Link to="/install" className="flex items-center gap-2 cursor-pointer">
                         <Download className="w-4 h-4" /> Instalar App
@@ -684,7 +684,7 @@ const Index = () => {
                       <MoreVertical className="w-4 h-4" />
                     </button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="bg-popover z-50 min-w-[180px]">
+                  <DropdownMenuContent align="end" sideOffset={6} className="bg-popover z-[200] min-w-[180px] shadow-xl border border-border">
                     <DropdownMenuItem asChild>
                       <Link to="/install" className="flex items-center gap-2 cursor-pointer">
                         <Download className="w-4 h-4" /> Instalar App
@@ -709,7 +709,7 @@ const Index = () => {
       </header>
 
       {/* City Title Bar */}
-      <div className="bg-card border-b border-border">
+      <div className="bg-card border-b border-border shrink-0">
         <div className="container py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
@@ -721,11 +721,13 @@ const Index = () => {
       </div>
 
       {/* Agenda Ticker */}
-      <AgendaTickerDisplay onNavigateToAgenda={() => handleTabChange("agenda")} />
+      <div className="shrink-0">
+        <AgendaTickerDisplay onNavigateToAgenda={() => handleTabChange("agenda")} />
+      </div>
 
       {/* Global Admin Notice */}
       {(globalSettings?.app_notice as any)?.active && (globalSettings?.app_notice as any)?.text && (
-        <div className="bg-primary/10 border-b border-primary/20">
+        <div className="bg-primary/10 border-b border-primary/20 shrink-0">
           <div className="container py-2 flex items-center gap-2">
             <Megaphone className="w-3.5 h-3.5 text-primary shrink-0" />
             <p className="text-xs text-foreground font-medium">{(globalSettings.app_notice as any).text}</p>
@@ -734,7 +736,7 @@ const Index = () => {
       )}
 
 
-      <div className="bg-card border-b border-border sticky top-[56px] sm:top-[72px] z-30">
+      <div className="bg-card border-b border-border z-30 shrink-0">
         <div className="container flex items-center gap-1 overflow-x-auto py-1.5 sm:py-2 tabs-fade-container tabs-scroll-snap scrollbar-none">
           {(() => {
             const FIXED_TABS = ["contatos", "social", "agenda"];
@@ -981,8 +983,8 @@ const Index = () => {
         </div>
       </div>
 
-      {/* Content */}
-      <main className="container py-6 animate-fade-in" key={`${city.id}-${tab}`}>
+      {/* Content — scrollable area */}
+      <main className={`flex-1 overflow-y-auto animate-fade-in ${tab === "navegar" ? "px-0 pb-20" : "container py-4 pb-24"}`} key={`${city.id}-${tab}`}>
         <TabErrorBoundary key={`eb-${tab}`}>
           <Suspense fallback={<TabFallback />}>
             {tab === "info" && <CityInfo city={city} />}
@@ -994,8 +996,8 @@ const Index = () => {
             {tab === "bairros" && <BairrosSection city={city} />}
             {tab === "navegar" && (
               user && userCity ? (
-                <div>
-                  <div className="flex items-center gap-2 mb-4 bg-primary/5 rounded-lg px-3 py-2">
+                <div className="px-3 pt-3 pb-4">
+                  <div className="flex items-center gap-2 mb-3 bg-primary/5 rounded-lg px-3 py-2">
                     <Navigation className="w-4 h-4 text-primary" />
                     <span className="text-sm font-semibold text-foreground">
                       Navegando em {detectedCityName || userCity.nome}

@@ -9,12 +9,12 @@ const config: CapacitorConfig = {
     cleartext: false,
   },
   android: {
-    backgroundColor: '#ffffff',
+    backgroundColor: '#1a6b40',
   },
   plugins: {
     StatusBar: {
-      style: 'DEFAULT',
-      backgroundColor: '#ffffff',
+      style: 'DARK',
+      backgroundColor: '#1a6b40',
       overlaysWebView: false,
     },
   },

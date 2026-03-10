@@ -5,8 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
 import {
-  Navigation, Crosshair, X, Volume2, VolumeX, Maximize,
-  Moon, Sun, CornerDownRight, Loader2, Locate
+  Navigation, Crosshair, X, Volume2, VolumeX,
+  Moon, Sun, CornerDownRight, Loader2, Locate, Expand, Shrink
 } from "lucide-react";
 
 import { type NavigationSectionProps, type RouteStep, type TrafficAlert, ALERT_TYPES, VOICE_RATES } from "./navigation/types";
@@ -64,6 +64,7 @@ const NavigationSection = ({ cityId, coordenadas, zoom, cityName, bairros = [], 
   const isDraggingDest = useRef(false);
   const lastRerouteTime = useRef(0);
   const offRouteCount = useRef(0);
+  const reroutingRef = useRef(false);
   const [rerouting, setRerouting] = useState(false);
   const [gpsAccuracy, setGpsAccuracy] = useState<number | null>(null);
   const userLatLng = useRef<[number, number] | null>(null);
@@ -72,6 +73,7 @@ const NavigationSection = ({ cityId, coordenadas, zoom, cityName, bairros = [], 
   const [mapDarkMode, setMapDarkMode] = useState<boolean | null>(null);
   const mapDarkModeLoaded = useRef(false);
   const [fullscreenNav, setFullscreenNav] = useState(false);
+  const [mapExpanded, setMapExpanded] = useState(false);
   const [followGps, setFollowGps] = useState(false);
   const followGpsRef = useRef(false);
   const [speedCameras, setSpeedCameras] = useState<SpeedCamera[]>([]);
@@ -132,11 +134,11 @@ const NavigationSection = ({ cityId, coordenadas, zoom, cityName, bairros = [], 
   useEffect(() => { pickingOnMapRef.current = pickingOnMap; }, [pickingOnMap]);
   useEffect(() => { placingAlertRef.current = placingAlert; }, [placingAlert]);
 
-  const isNightTime = () => {
+  const isNightTime = useCallback(() => {
     if (mapDarkMode !== null) return mapDarkMode;
     const hour = new Date().getHours();
     return hour >= 18 || hour < 6;
-  };
+  }, [mapDarkMode]);
 
   const tileLayerRef = useRef<L.TileLayer | null>(null);
 
@@ -342,11 +344,12 @@ const NavigationSection = ({ cityId, coordenadas, zoom, cityName, bairros = [], 
   }, [dest]);
 
   // Fit bounds
+  // Fit bounds only when NOT tracking (avoids jumping map during navigation)
   useEffect(() => {
-    if (origin && dest && mapInstance.current) {
+    if (origin && dest && mapInstance.current && !tracking) {
       mapInstance.current.fitBounds(L.latLngBounds(origin, dest), { padding: [50, 50] });
     }
-  }, [origin, dest]);
+  }, [origin, dest, tracking]);
 
   const calcRoute = useCallback(async () => {
     let effectiveDest = dest;
@@ -510,10 +513,11 @@ const NavigationSection = ({ cityId, coordenadas, zoom, cityName, bairros = [], 
 
   // Auto-reroute
   const rerouteFromPosition = useCallback(async (currentPos: [number, number]) => {
-    if (!dest || rerouting) return;
+    if (!dest || reroutingRef.current) return;
     const now = Date.now();
     if (now - lastRerouteTime.current < 15000) return;
     lastRerouteTime.current = now;
+    reroutingRef.current = true;
     setRerouting(true);
     try {
       const profile = transportModeRef.current;
@@ -521,7 +525,7 @@ const NavigationSection = ({ cityId, coordenadas, zoom, cityName, bairros = [], 
         `https://router.project-osrm.org/route/v1/${profile}/${currentPos[1]},${currentPos[0]};${dest[1]},${dest[0]}?overview=full&geometries=geojson&steps=true`
       );
       const data = await res.json();
-      if (data.code !== "Ok" || !data.routes?.length) { setRerouting(false); return; }
+      if (data.code !== "Ok" || !data.routes?.length) { reroutingRef.current = false; setRerouting(false); return; }
       const route = data.routes[0];
       const coords = route.geometry.coordinates.map((c: number[]) => [c[1], c[0]] as [number, number]);
       routeCoordsRef.current = coords;
@@ -552,8 +556,9 @@ const NavigationSection = ({ cityId, coordenadas, zoom, cityName, bairros = [], 
       speak("Recalculando rota");
       toast({ title: "🔄 Rota recalculada", description: `Nova rota: ${formatDistance(route.distance)} · ${formatDuration(totalSeconds)}` });
     } catch { /* ignore */ }
+    reroutingRef.current = false;
     setRerouting(false);
-  }, [dest, rerouting, alerts, speak]);
+  }, [dest, alerts, speak]);
 
   // GPS tracking
   const toggleTracking = useCallback(() => {
@@ -594,10 +599,13 @@ const NavigationSection = ({ cityId, coordenadas, zoom, cityName, bairros = [], 
         }
         // Off-route detection
         if (routeCoordsRef.current.length > 0 && dest) {
-          const isOnRoute = pointNearRoute(latlng, routeCoordsRef.current, 0.001);
+          const isOnRoute = pointNearRoute(latlng, routeCoordsRef.current, 0.0015);
           if (!isOnRoute) {
             offRouteCount.current++;
-            if (offRouteCount.current >= 3) rerouteFromPosition(latlng);
+            if (offRouteCount.current === 2) {
+              toast({ title: "🔄 Fora da rota", description: "Recalculando rota..." });
+            }
+            if (offRouteCount.current >= 2 && !reroutingRef.current) rerouteFromPosition(latlng);
           } else {
             offRouteCount.current = 0;
           }
@@ -646,9 +654,23 @@ const NavigationSection = ({ cityId, coordenadas, zoom, cityName, bairros = [], 
       (err) => {
         if (err.code === err.TIMEOUT) {
           console.warn("GPS timeout, aguardando próxima leitura...");
-        } else {
-          toast({ title: "Erro GPS", description: err.message, variant: "destructive" });
+        } else if (err.code === err.PERMISSION_DENIED) {
           setTracking(false);
+          toast({
+            title: "❌ Permissão de GPS negada",
+            description: "Vá em Configurações do seu celular → Permissões do app → Localização → Permitir sempre.",
+            variant: "destructive",
+          });
+        } else if (err.code === err.POSITION_UNAVAILABLE) {
+          setTracking(false);
+          toast({
+            title: "📡 GPS indisponível",
+            description: "Não foi possível obter sinal GPS. Verifique se o GPS está ativado nas configurações.",
+            variant: "destructive",
+          });
+        } else {
+          setTracking(false);
+          toast({ title: "Erro GPS", description: "Problema ao acessar o GPS. Tente novamente.", variant: "destructive" });
         }
       },
       { enableHighAccuracy: true, maximumAge: 5000, timeout: 30000 }
@@ -670,6 +692,11 @@ const NavigationSection = ({ cityId, coordenadas, zoom, cityName, bairros = [], 
 
   const recenterMap = useCallback(() => {
     if (!mapInstance.current) return;
+    setMapDragged(false);
+    if (tracking) {
+      setFollowGps(true);
+      followGpsRef.current = true;
+    }
     // Always try to get fresh user position first
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -694,7 +721,7 @@ const NavigationSection = ({ cityId, coordenadas, zoom, cityName, bairros = [], 
     }
     if (origin && dest) mapInstance.current.fitBounds(L.latLngBounds(origin, dest), { padding: [50, 50] });
     else mapInstance.current.setView(coordenadas, zoom, { animate: true });
-  }, [origin, dest, coordenadas, zoom]);
+  }, [tracking, origin, dest, coordenadas, zoom]);
 
   const clearRoute = () => {
     routeLayer.current?.clearLayers();
@@ -741,7 +768,32 @@ const NavigationSection = ({ cityId, coordenadas, zoom, cityName, bairros = [], 
       )}
 
       {/* Map FIRST — like Waze */}
-      <div className={`relative rounded-xl border shadow-lg ${pickingOnMap ? "border-primary ring-2 ring-primary/30" : "border-border"}`} style={{ height: routeInfo ? "70vh" : "50vh" }}>
+      <div
+        className={`relative border shadow-lg transition-all duration-300 ${pickingOnMap ? "border-primary ring-2 ring-primary/30" : "border-border"} ${mapExpanded ? "fixed inset-0 z-[500] rounded-none" : "rounded-xl"}`}
+        style={{ height: mapExpanded ? "100dvh" : (routeInfo && tracking) ? "45vh" : routeInfo ? "50vh" : "45vh" }}
+      >
+        {/* Fullscreen close button — big X always visible */}
+        {mapExpanded && (
+          <button
+            onClick={() => { setMapExpanded(false); setTimeout(() => mapInstance.current?.invalidateSize(), 100); }}
+            className="absolute z-[1100] flex items-center gap-2 bg-destructive text-white font-bold text-sm px-4 py-3 rounded-full shadow-xl animate-fade-in touch-target"
+            style={{ top: "max(16px, env(safe-area-inset-top, 16px))", left: "16px" }}
+            title="Fechar tela cheia"
+          >
+            <X className="w-5 h-5" />
+            Fechar
+          </button>
+        )}
+        {/* Fullscreen close button — always visible when expanded */}
+        {mapExpanded && (
+          <button
+            onClick={() => { setMapExpanded(false); setTimeout(() => mapInstance.current?.invalidateSize(), 100); }}
+            className="absolute z-[600] flex items-center gap-2 bg-destructive text-white font-bold text-sm px-4 py-3 rounded-full shadow-xl animate-fade-in"
+            style={{ bottom: "max(24px, env(safe-area-inset-bottom, 24px))", left: "50%", transform: "translateX(-50%)" }}
+          >
+            <X className="w-4 h-4" /> Fechar tela cheia
+          </button>
+        )}
         {pickingOnMap && (
           <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[1000] bg-primary text-primary-foreground px-4 py-2 rounded-full text-xs font-bold shadow-lg flex items-center gap-2 animate-fade-in pointer-events-none">
             <Crosshair className="w-3.5 h-3.5" />
@@ -789,10 +841,19 @@ const NavigationSection = ({ cityId, coordenadas, zoom, cityName, bairros = [], 
 
           <button
             onClick={recenterMap}
-            className="flex items-center gap-1.5 px-3 py-2.5 rounded-full shadow-lg bg-card text-foreground hover:bg-muted transition-colors text-xs font-bold touch-target"
+            className={`flex items-center gap-1.5 px-3 py-2.5 rounded-full shadow-lg transition-colors text-xs font-bold touch-target ${mapDragged ? "bg-primary text-primary-foreground animate-pulse" : "bg-card text-foreground hover:bg-muted"}`}
             title="Recentralizar mapa na minha posição"
           >
-            <Maximize className="w-4 h-4" />
+            <Locate className="w-4 h-4" />
+            {mapDragged && <span>Voltar</span>}
+          </button>
+
+          <button
+            onClick={() => { setMapExpanded(p => !p); setTimeout(() => mapInstance.current?.invalidateSize(), 100); }}
+            className={`flex items-center gap-1.5 px-3 py-2.5 rounded-full shadow-lg transition-colors text-xs font-bold touch-target ${mapExpanded ? "bg-primary text-primary-foreground" : "bg-card text-foreground hover:bg-muted"}`}
+            title={mapExpanded ? "Sair da tela cheia" : "Abrir mapa em tela cheia"}
+          >
+            {mapExpanded ? <Shrink className="w-4 h-4" /> : <Expand className="w-4 h-4" />}
           </button>
 
           <button
@@ -827,42 +888,37 @@ const NavigationSection = ({ cityId, coordenadas, zoom, cityName, bairros = [], 
         {/* Recenter button — shown when user dragged the map */}
         {mapDragged && (
           <button
-            onClick={() => {
-              setMapDragged(false);
-              if (tracking) {
-                setFollowGps(true);
-                followGpsRef.current = true;
-              }
-              // Try fresh GPS position first, fallback to cached
-              if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                  (pos) => {
-                    const latlng: [number, number] = [pos.coords.latitude, pos.coords.longitude];
-                    userLatLng.current = latlng;
-                    mapInstance.current?.setView(latlng, Math.max(mapInstance.current?.getZoom() || 15, 16), { animate: true });
-                  },
-                  () => {
-                    // Fallback to cached position or city center
-                    if (userLatLng.current) {
-                      mapInstance.current?.setView(userLatLng.current, Math.max(mapInstance.current?.getZoom() || 15, 16), { animate: true });
-                    } else {
-                      mapInstance.current?.setView(coordenadas, zoom, { animate: true });
-                    }
-                  },
-                  { enableHighAccuracy: true, maximumAge: 5000, timeout: 8000 }
-                );
-              } else if (userLatLng.current) {
-                mapInstance.current?.setView(userLatLng.current, Math.max(mapInstance.current?.getZoom() || 15, 16), { animate: true });
-              } else {
-                mapInstance.current?.setView(coordenadas, zoom, { animate: true });
-              }
-            }}
+            onClick={recenterMap}
             className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[1000] flex items-center gap-2 px-5 py-3 rounded-full shadow-xl bg-primary text-primary-foreground font-bold text-sm animate-fade-in touch-target"
             title="Recentralizar no GPS"
           >
             <Locate className="w-5 h-5" />
             Recentralizar
           </button>
+        )}
+
+        {/* Floating stop/cancel button — visible when route active */}
+        {routeInfo && !mapDragged && (
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[1000] flex items-center gap-2 animate-fade-in">
+            {tracking && (
+              <button
+                onClick={() => { setFullscreenNav(true); }}
+                className="flex items-center gap-2 px-4 py-3 rounded-full shadow-xl bg-primary text-primary-foreground font-bold text-sm touch-target"
+                title="Abrir navegação em tela cheia"
+              >
+                <Navigation className="w-4 h-4" />
+                Navegar
+              </button>
+            )}
+            <button
+              onClick={() => { if (tracking) toggleTracking(); clearRoute(); }}
+              className="flex items-center gap-2 px-4 py-3 rounded-full shadow-xl bg-destructive text-white font-bold text-sm touch-target"
+              title="Cancelar rota"
+            >
+              <X className="w-4 h-4" />
+              Cancelar
+            </button>
+          </div>
         )}
       </div>
 
