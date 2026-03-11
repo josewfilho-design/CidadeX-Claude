@@ -984,7 +984,7 @@ const Index = () => {
       </div>
 
       {/* Content — scrollable area */}
-      <main className={`flex-1 overflow-y-auto animate-fade-in ${tab === "navegar" ? "px-0 pb-20" : "container py-4 pb-24"}`} key={`${city.id}-${tab}`}>
+      <main className={`flex-1 overflow-y-auto animate-fade-in ${tab === "navegar" ? "px-0 pb-32" : "container py-4 pb-24"}`} key={`${city.id}-${tab}`}>
         <TabErrorBoundary key={`eb-${tab}`}>
           <Suspense fallback={<TabFallback />}>
             {tab === "info" && <CityInfo city={city} />}
@@ -996,7 +996,7 @@ const Index = () => {
             {tab === "bairros" && <BairrosSection city={city} />}
             {tab === "navegar" && (
               user && userCity ? (
-                <div className="px-3 pt-3 pb-4">
+                <div className="px-3 pt-3 pb-8">
                   <div className="flex items-center gap-2 mb-3 bg-primary/5 rounded-lg px-3 py-2">
                     <Navigation className="w-4 h-4 text-primary" />
                     <span className="text-sm font-semibold text-foreground">
