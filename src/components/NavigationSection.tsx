@@ -749,11 +749,11 @@ const NavigationSection = ({ cityId, coordenadas, zoom, cityName, bairros = [], 
   return (
     <div className="space-y-4">
       {/* Fullscreen Navigation */}
-      {fullscreenNav && routeInfo && origin && dest && (
+      {fullscreenNav && routeInfo && (origin ?? userLatLng.current) && dest && (
         <NavigationFullscreen
           steps={steps}
           routeCoords={routeCoordsRef.current}
-          origin={origin}
+          origin={origin ?? userLatLng.current!}
           dest={dest}
           routeInfo={routeInfo}
           alerts={alerts}
@@ -1007,3 +1007,5 @@ const NavigationSection = ({ cityId, coordenadas, zoom, cityName, bairros = [], 
 };
 
 export default NavigationSection;
+
+
