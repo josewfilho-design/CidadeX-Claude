@@ -423,7 +423,7 @@ const Index = () => {
     <>
     <div className="h-screen flex flex-col bg-background overflow-hidden">
       {/* Header */}
-      <header className="gradient-hero z-40 shadow-lg shrink-0">
+      <header className="gradient-hero z-40 shadow-lg shrink-0" style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}>
         <div className="container py-2 sm:py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl gradient-gold flex items-center justify-center shadow-md">
