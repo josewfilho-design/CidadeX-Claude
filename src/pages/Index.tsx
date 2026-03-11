@@ -19,7 +19,7 @@ import { AgendaTickerDisplay } from "@/components/common/AgendaTicker";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { Map, Info, Building2, Route, Newspaper, MessageCircle, LogOut, LogIn, Download, Share2, Navigation, CloudSun, CalendarDays, Phone, MapPin, Bot, CalendarCheck, Megaphone, HelpCircle, UserPlus, Users, Shield, RefreshCw, DollarSign, ChevronDown, MoreVertical, GripVertical, Check } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useAdmin, useGlobalSettings } from "@/hooks/useAdmin";
 import NotificationsBell from "@/components/common/NotificationsBell";
 import BottomNav from "@/components/common/BottomNav";
@@ -651,6 +651,12 @@ const Index = () => {
                         <HelpCircle className="w-4 h-4" /> Ajuda e Regras
                       </Link>
                     </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <div className="px-2 py-1.5 space-y-0.5">
+                      <p className="text-[10px] text-muted-foreground/60 font-medium">Powered by CidX · © 2026 CidadeX-BR</p>
+                      <p className="text-[10px] text-muted-foreground/50">v{APP_VERSION} · Sistemas Guarany</p>
+                    </div>
+                    <DropdownMenuSeparator />
                     <DropdownMenuItem
                       onClick={() => setShowLogoutBackup(true)}
                       className="flex items-center gap-2 cursor-pointer text-destructive focus:text-destructive"
@@ -1033,7 +1039,6 @@ const Index = () => {
       </main>
 
       <div className="pb-16 md:pb-0" /> {/* Bottom nav spacer on mobile */}
-      <PoweredFooter />
       <BottomNav activeTab={tab} onTabChange={(t) => handleTabChange(t as Tab)} />
       <Suspense fallback={null}>
         <AIChat cityName={city.nome} stateName={city.estado} />
@@ -1045,3 +1050,6 @@ const Index = () => {
 };
 
 export default Index;
+
+
+
