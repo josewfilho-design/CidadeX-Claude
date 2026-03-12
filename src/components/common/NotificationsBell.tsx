@@ -165,7 +165,7 @@ const NotificationsBell = () => {
     if (!user) return;
     const { data: meds } = await supabase
       .from("medications")
-      .select("id, name, schedule_time, frequency, start_date, suspended, doctor_id")
+      .select("id, name, schedule_time, frequency, start_date, suspended, doctor_id, duration_type, duration_days")
       .eq("user_id", user.id)
       .eq("suspended", false);
 
@@ -190,7 +190,12 @@ const NotificationsBell = () => {
     const overdueMeds: string[] = [];
     const upcomingMeds: string[] = [];
 
+    const today = new Date(); today.setHours(0,0,0,0);
     for (const med of meds as any[]) {
+      if (med.duration_type === "fixed_days" && med.duration_days && med.start_date) {
+        const end = new Date(med.start_date); end.setDate(end.getDate() + med.duration_days - 1); end.setHours(23,59,59,999);
+        if (end < today) continue;
+      }
       const times = (med.schedule_time || "08:00").split(",").map((t: string) => t.trim()).filter(Boolean);
       for (const timeStr of times) {
         const [h, m] = timeStr.split(":").map(Number);
@@ -529,3 +534,5 @@ const NotificationsBell = () => {
 };
 
 export default NotificationsBell;
+
+
