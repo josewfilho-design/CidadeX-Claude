@@ -20,6 +20,7 @@ import {
 import DateInput from "@/components/common/DateInput";
 import { cn } from "@/lib/utils";
 import { supabaseRetry } from "@/lib/supabaseRetry";
+import { useMedicationAlarms } from "@/hooks/useMedicationAlarms";
 
 // --- Types ---
 interface Medication {
