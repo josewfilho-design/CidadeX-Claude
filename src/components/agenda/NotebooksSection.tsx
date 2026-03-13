@@ -63,6 +63,7 @@ const NotebooksSection = React.forwardRef<HTMLDivElement>(function NotebooksSect
   const navigate = useNavigate();
 
   const [notebooks, setNotebooks] = useState<Notebook[]>([]);
+  const [sortBy, setSortBy] = useState<"position" | "name">("position");
   const [loading, setLoading] = useState(true);
   const [selectedNotebook, setSelectedNotebook] = useState<Notebook | null>(null);
   const [notes, setNotes] = useState<Note[]>([]);
@@ -1009,11 +1010,19 @@ const NotebooksSection = React.forwardRef<HTMLDivElement>(function NotebooksSect
           <span className="text-sm font-bold">Cadernos</span>
           <span className="text-[10px] text-muted-foreground">({notebooks.length})</span>
         </div>
-        <button onClick={() => { setShowNotebookForm(true); setEditingNotebook(null); setNbName(""); setNbColor(NOTEBOOK_COLORS[0]); }}
-          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-colors"
-          title="Criar novo caderno">
-          <Plus className="w-3.5 h-3.5" /> Novo
-        </button>
+        <div className="flex items-center gap-1.5">
+          <button onClick={() => setSortBy(s => s === "position" ? "name" : "position")}
+            className="flex items-center gap-1 px-2 py-1.5 rounded-lg bg-muted text-muted-foreground text-xs font-semibold hover:bg-accent transition-colors"
+            title={sortBy === "name" ? "Ordenar por posição" : "Ordenar A-Z"}>
+            <ArrowUpDown className="w-3 h-3" />
+            {sortBy === "name" ? "A-Z" : "Pos."}
+          </button>
+          <button onClick={() => { setShowNotebookForm(true); setEditingNotebook(null); setNbName(""); setNbColor(NOTEBOOK_COLORS[0]); }}
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-colors"
+            title="Criar novo caderno">
+            <Plus className="w-3.5 h-3.5" /> Novo
+          </button>
+        </div>
       </div>
 
       {/* Notebook Form */}
@@ -1073,7 +1082,7 @@ const NotebooksSection = React.forwardRef<HTMLDivElement>(function NotebooksSect
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-2">
-          {notebooks.map(nb => (
+          {[...notebooks].sort((a, b) => sortBy === "name" ? a.name.localeCompare(b.name, "pt-BR") : a.position - b.position).map(nb => (
             <div key={nb.id}
               className="rounded-lg border border-border bg-card hover:bg-accent/30 transition-colors cursor-pointer group relative overflow-hidden"
               onClick={() => setSelectedNotebook(nb)}
